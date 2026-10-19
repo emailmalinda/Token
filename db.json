@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-19",
+  "jrNext": 11,
+  "clNext": 6,
+  "jrQueue": [],
+  "clQueue": [],
+  "activeCalls": {
+    "1": {
+      "token": "JR-010",
+      "time": "04:31 PM"
+    },
+    "2": null,
+    "3": null,
+    "4": null
+  },
+  "history": [
+    {
+      "token": "JR-010",
+      "counter": "1",
+      "time": "04:31 PM"
+    },
+    {
+      "token": "CL-005",
+      "counter": "1",
+      "time": "04:31 PM"
+    },
+    {
+      "token": "CL-004",
+      "counter": "1",
+      "time": "04:30 PM"
+    },
+    {
+      "token": "CL-003",
+      "counter": "1",
+      "time": "04:30 PM"
+    },
+    {
+      "token": "CL-002",
+      "counter": "1",
+      "time": "04:30 PM"
+    }
+  ]
+}

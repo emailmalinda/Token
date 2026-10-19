@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>INVO Tokens — Take Your Token</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .mob-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-glass);
+      background: rgba(11,15,25,0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .mob-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .mob-logo-icon {
+      width: 34px;
+      height: 34px;
+      background: var(--accent-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mob-logo-icon svg { width: 18px; height: 18px; color: #0b0f19; }
+    .mob-logo-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      background: linear-gradient(to right, #fff, var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Screens ── */
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 2rem 1.25rem;
+      min-height: calc(100vh - 70px);
+      text-align: center;
+    }
+    .screen.active { display: flex; }
+
+    /* ── Screen 1: Choose type ── */
+    .choose-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .choose-sub {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+    .type-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 360px;
+    }
+    .type-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid var(--border-glass);
+      border-radius: var(--border-radius-md);
+      padding: 2rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .type-card:active { transform: scale(0.97); }
+    .type-card.jr-card { border-color: rgba(79,172,254,0.3); }
+    .type-card.cl-card { border-color: rgba(16,185,129,0.3); }
+    .type-card:hover { border-color: rgba(255,255,255,0.2); box-shadow: var(--shadow-lg); }
+    .type-card.jr-card:hover { border-color: rgba(79,172,254,0.6); box-shadow: 0 0 30px rgba(79,172,254,0.15); }
+    .type-card.cl-card:hover { border-color: rgba(16,185,129,0.6); box-shadow: 0 0 30px rgba(16,185,129,0.15); }
+    .type-card-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .jr-card .type-card-icon { background: rgba(79,172,254,0.15); }
+    .cl-card .type-card-icon { background: rgba(16,185,129,0.15); }
+    .type-card-icon svg { width: 28px; height: 28px; }
+    .jr-card .type-card-icon svg { color: var(--accent-blue); }
+    .cl-card .type-card-icon svg { color: var(--accent-green); }
+    .type-card h2 { font-size: 1.2rem; font-weight: 700; }
+    .type-card p { font-size: 0.83rem; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ── Screen 2: Waiting ── */
+    .waiting-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 999px;
+      padding: 0.35rem 1rem;
+      font-size: 0.8rem;
+      color: var(--accent-yellow);
+      font-weight: 600;
+      margin-bottom: 2rem;
+    }
+    .waiting-badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-yellow);
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .token-display-card {
+      background: var(--bg-glass);
+      border: 1.5px solid var(--border-glass);
+      border-radius: var(--border-radius-lg);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 1.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .token-display-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(0,242,254,0.06) 0%, transparent 60%);
+      animation: rotate 8s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes rotate { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    .token-type-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .token-number-big {
+      font-size: 4rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .token-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .waiting-msg {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 280px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--border-radius-sm);
+      padding: 0.85rem 1.25rem;
+    }
+    .waiting-msg strong { color: #fff; }
+
+    /* ── Screen 3: CALLED! ── */
+    .called-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(11,15,25,0.97);
+      backdrop-filter: blur(20px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      animation: fadeInOverlay 0.4s ease;
+    }
+    .called-overlay.show { display: flex; }
+    @keyframes fadeInOverlay { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+
+    .called-ring {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(0,242,254,0.2));
+      border: 3px solid var(--accent-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+      animation: ringPulse 1s ease infinite;
+      box-shadow: 0 0 0 0 rgba(16,185,129,0.5);
+    }
+    @keyframes ringPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      70%  { box-shadow: 0 0 0 25px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    }
+    .called-ring svg { width: 56px; height: 56px; color: var(--accent-green); }
+
+    .called-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--accent-green);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 0.75rem;
+    }
+    .called-token {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .called-counter {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 1rem 0;
+    }
+    .called-sub {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+    }
+    .btn-dismiss {
+      background: linear-gradient(135deg, var(--accent-green), #059669);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      padding: 1rem 2.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      width: 100%;
+      max-width: 280px;
+      transition: opacity 0.2s;
+    }
+    .btn-dismiss:active { opacity: 0.85; }
+
+    .btn-new-token {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--border-radius-sm);
+      padding: 0.75rem 2rem;
+      font-size: 0.9rem;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      width: 100%;
+      max-width: 280px;
+      margin-top: 0.75rem;
+      transition: all 0.2s;
+    }
+    .btn-new-token:active { opacity: 0.7; }
+
+    /* Spinner */
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="mob-header">
+    <div class="mob-logo">
+      <div class="mob-logo-icon">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6zm16-4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-1 9h-4V9h4v2zm-5-2h-3V7h3v2zm5-4h-9V5h9v2zm0 8H8v-2h12v2z"/>
+        </svg>
+      </div>
+      <span class="mob-logo-title">INVO TOKENS</span>
+    </div>
+  </header>
+
+  <!-- ══ SCREEN 1: Choose Type ══ -->
+  <div class="screen active" id="screen-choose">
+    <div class="choose-title">Welcome! 👋</div>
+    <div class="choose-sub">What brings you here today?</div>
+    <div class="type-cards">
+      <div class="type-card jr-card" id="mob-btn-jr">
+        <div class="type-card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h2>Job Request</h2>
+        <p>Submit a new job or service request</p>
+      </div>
+
+      <div class="type-card cl-card" id="mob-btn-cl">
+        <div class="type-card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+        <h2>Collection</h2>
+        <p>Pick up a completed document or package</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 2: Waiting ══ -->
+  <div class="screen" id="screen-waiting">
+    <div class="waiting-badge">
+      <span class="waiting-badge-dot"></span>
+      Waiting to be called
+    </div>
+
+    <div class="token-display-card glass-panel">
+      <div class="token-type-label" id="mob-token-type">JOB REQUEST</div>
+      <div class="token-number-big" id="mob-token-number">---</div>
+      <div class="token-time" id="mob-token-time">Issued at --:--</div>
+    </div>
+
+    <div class="waiting-msg">
+      📢 <strong>Keep your volume on!</strong><br>
+      You'll hear a notification and see an alert on this screen when your number is called.
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 3: CALLED! Overlay ══ -->
+  <div class="called-overlay" id="called-overlay">
+    <div class="called-ring">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+    </div>
+
+    <div class="called-title">🔔 Your Turn!</div>
+    <div class="called-token" id="called-token-num">JR-000</div>
+    <div class="called-counter" id="called-counter-num">Please go to Counter 1</div>
+    <div class="called-sub">Proceed to the counter immediately.<br>Your slot may be skipped if you delay.</div>
+
+    <button class="btn-dismiss" id="btn-dismiss-called">
+      ✓ I'm On My Way!
+    </button>
+    <button class="btn-new-token" id="btn-get-new-token">
+      Get New Token
+    </button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/customer.js"></script>
+</body>
+</html>

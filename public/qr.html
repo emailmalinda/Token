@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer QR Code — INVO Tokens</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <!-- qrcode.js from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .qr-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--border-radius-xl);
+      padding: 3rem 2.5rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .qr-header {
+      margin-bottom: 2rem;
+    }
+
+    .qr-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+    .qr-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-logo-icon svg { width: 18px; height: 18px; color: #0b0f19; }
+    .qr-logo-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      background: linear-gradient(to right, #fff, var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .qr-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .qr-sub {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* QR code wrapper */
+    .qr-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: inline-block;
+      margin: 1.75rem auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    /* Corner decorations */
+    .qr-box::before, .qr-box::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: var(--accent-cyan);
+      border-style: solid;
+    }
+    .qr-box::before { top: -3px; left: -3px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .qr-box::after  { bottom: -3px; right: -3px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+    #qrcode canvas, #qrcode img {
+      display: block;
+    }
+
+    .qr-url {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-glass);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-family: monospace;
+      word-break: break-all;
+      margin-bottom: 1.5rem;
+    }
+
+    .qr-instructions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      text-align: left;
+    }
+    .qr-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .qr-step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(0,242,254,0.15);
+      border: 1px solid rgba(0,242,254,0.3);
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .refresh-btn {
+      margin-top: 1.5rem;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--border-radius-sm);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.85rem;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { border-color: rgba(0,242,254,0.4); color: var(--accent-cyan); }
+
+    /* Print styles */
+    @media print {
+      body { background: white !important; }
+      .qr-card {
+        background: white !important;
+        border: 2px solid #ddd !important;
+        box-shadow: none !important;
+        color: black !important;
+      }
+      .qr-title, .qr-logo-title { color: black !important; -webkit-text-fill-color: black !important; }
+      .qr-sub, .qr-step, .qr-url { color: #555 !important; }
+      .qr-step-num { background: #eee !important; color: #333 !important; border-color: #ccc !important; }
+      .refresh-btn { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="qr-card">
+    <div class="qr-header">
+      <div class="qr-logo">
+        <div class="qr-logo-icon">
+          <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6zm16-4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-1 9h-4V9h4v2zm-5-2h-3V7h3v2zm5-4h-9V5h9v2zm0 8H8v-2h12v2z"/>
+          </svg>
+        </div>
+        <span class="qr-logo-title">INVO TOKENS</span>
+      </div>
+      <div class="qr-title">📱 Scan to Get Your Token</div>
+      <div class="qr-sub">Use your smartphone to scan this QR code and get a queue token instantly — no waiting at the counter!</div>
+    </div>
+
+    <div class="qr-box">
+      <div id="qrcode"></div>
+    </div>
+
+    <div class="qr-url" id="qr-url-display">Generating URL...</div>
+
+    <div class="qr-instructions">
+      <div class="qr-step">
+        <span class="qr-step-num">1</span>
+        <span>Open your phone camera and point at the QR code above</span>
+      </div>
+      <div class="qr-step">
+        <span class="qr-step-num">2</span>
+        <span>Tap the link that appears to open the token page</span>
+      </div>
+      <div class="qr-step">
+        <span class="qr-step-num">3</span>
+        <span>Choose <strong>Job Request</strong> or <strong>Collection</strong></span>
+      </div>
+      <div class="qr-step">
+        <span class="qr-step-num">4</span>
+        <span>Keep the page open — you'll be notified when called! 🔔</span>
+      </div>
+    </div>
+
+    <button class="refresh-btn" onclick="window.print()">🖨️ Print This QR</button>
+  </div>
+
+  <script>
+    // Build the customer URL from the current server address
+    const customerUrl = window.location.origin + '/customer';
+
+    // Display the URL
+    document.getElementById('qr-url-display').textContent = customerUrl;
+
+    // Generate QR code
+    new QRCode(document.getElementById('qrcode'), {
+      text: customerUrl,
+      width: 220,
+      height: 220,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  </script>
+</body>
+</html>

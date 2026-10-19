@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Kiosk - Token System</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    .kiosk-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      margin: auto 0;
+      padding: 1rem 0;
+      align-items: center;
+    }
+    /* QR Panel */
+    .qr-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 2rem;
+      border-radius: var(--border-radius-lg);
+      border: 1.5px solid rgba(0,242,254,0.2);
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      text-align: center;
+      gap: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .qr-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(0,242,254,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .qr-panel-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .qr-panel-sub {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      max-width: 220px;
+    }
+    .qr-frame {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 0 30px rgba(0,242,254,0.2);
+      position: relative;
+    }
+    /* Corner accents on QR */
+    .qr-frame::before, .qr-frame::after {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      border-color: var(--accent-cyan);
+      border-style: solid;
+    }
+    .qr-frame::before { top:-4px; left:-4px; border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
+    .qr-frame::after  { bottom:-4px; right:-4px; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
+    .qr-scan-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--accent-cyan);
+      background: rgba(0,242,254,0.08);
+      border: 1px solid rgba(0,242,254,0.2);
+      border-radius: 999px;
+      padding: 0.3rem 0.85rem;
+    }
+    .qr-dot-pulse {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100%{opacity:1;transform:scale(1)}
+      50%{opacity:0.4;transform:scale(0.8)}
+    }
+    /* Right side: two kiosk cards stacked */
+    .kiosk-cards-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .kiosk-card {
+      flex: unset !important;
+      padding: 2rem 1.5rem !important;
+    }
+    /* Divider */
+    .kiosk-divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <!-- Ticket SVG Icon -->
+          <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4 6H2v14a2 2 0 0 0 2 2h14v-2H4V6zm16-4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-1 9h-4V9h4v2zm-5-2h-3V7h3v2zm5-4h-9V5h9v2zm0 8H8v-2h12v2z"/>
+          </svg>
+        </div>
+        <h1 class="brand-title">INVO TOKENS</h1>
+      </div>
+      <div class="live-clock" id="live-clock">--:--:-- AM</div>
+    </header>
+
+    <main class="kiosk-layout">
+
+      <!-- LEFT: QR Code Panel -->
+      <div class="qr-panel">
+        <div class="qr-panel-title">📱 Use Your Phone</div>
+        <div class="qr-panel-sub">Scan this QR code with your smartphone to get a token &amp; receive a notification when called</div>
+
+        <div class="qr-frame">
+          <div id="kiosk-qrcode"></div>
+        </div>
+
+        <div class="qr-scan-hint">
+          <span class="qr-dot-pulse"></span>
+          Point your camera here to scan
+        </div>
+      </div>
+
+      <!-- RIGHT: Physical Kiosk Buttons -->
+      <div class="kiosk-cards-col">
+        <div style="text-align:center; font-size:0.8rem; color:var(--text-muted); font-weight:500; letter-spacing:1px; text-transform:uppercase;">Or tap below</div>
+
+        <!-- Job Request Button Card -->
+        <div class="kiosk-card jr-card glass-panel" id="btn-job-request">
+          <div class="kiosk-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <h2>Job Request</h2>
+          <p>Submit a new job or service request</p>
+        </div>
+
+        <!-- Collection Button Card -->
+        <div class="kiosk-card cl-card glass-panel" id="btn-collection">
+          <div class="kiosk-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+          </div>
+          <h2>Collection</h2>
+          <p>Pick up a completed document or package</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- SMS Phone Number Modal -->
+  <div class="modal-overlay" id="sms-phone-modal" style="display:none; z-index: 1000;">
+    <div class="modal-content glass-panel" style="max-width: 420px; width: 90%; text-align: center;">
+      <div style="margin-bottom: 1.5rem;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(37,211,102,0.25), rgba(18,140,126,0.25)); border: 2px solid rgba(37,211,102,0.5); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          <!-- WhatsApp Icon -->
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="#25D366">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 0.5rem; font-size: 1.3rem;">WhatsApp Notification</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Enter your phone number to receive a WhatsApp message when your token is called. Or skip to continue without notification.</p>
+      </div>
+
+      <!-- Phone number input with fixed 07 prefix -->
+      <div style="display: flex; align-items: center; gap: 0; margin-bottom: 1.5rem; border: 1.5px solid rgba(0,242,254,0.35); border-radius: var(--border-radius-sm); overflow: hidden; background: rgba(0,0,0,0.25);">
+        <div style="padding: 0.85rem 1rem; background: rgba(0,242,254,0.1); border-right: 1.5px solid rgba(0,242,254,0.25); font-weight: 700; font-size: 1.1rem; color: var(--accent-cyan); letter-spacing: 1px; user-select: none; white-space: nowrap;">07</div>
+        <input
+          type="tel"
+          id="sms-phone-input"
+          maxlength="8"
+          placeholder="XXXXXXXX"
+          inputmode="numeric"
+          autocomplete="off"
+          style="flex: 1; padding: 0.85rem 1rem; background: transparent; border: none; outline: none; color: #fff; font-size: 1.3rem; font-weight: 600; letter-spacing: 3px; width: 100%; font-family: 'Courier New', monospace;"
+        />
+      </div>
+
+      <!-- Digit counter indicator -->
+      <div style="display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 1.5rem;" id="digit-dots">
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+        <span class="digit-dot" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.2);display:inline-block;transition:all 0.2s;"></span>
+      </div>
+
+      <!-- Error message -->
+      <div id="sms-phone-error" style="display:none; color: #fca5a5; font-size:0.85rem; margin-bottom:1rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 0.5rem 1rem; border-radius: 6px;">Please enter all 8 digits after "07"</div>
+
+      <!-- Action buttons -->
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <button class="btn-primary" id="btn-sms-confirm" style="padding: 0.85rem; font-size: 1rem; opacity: 0.5; pointer-events: none; background: linear-gradient(135deg, #25D366, #128C7E); border-color: transparent;" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display:inline; vertical-align:middle; margin-right: 6px;">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          Send WhatsApp &amp; Get Token
+        </button>
+        <button class="btn-secondary" id="btn-sms-skip" style="padding: 0.75rem; font-size: 0.95rem; border-color: var(--border-glass);">
+          Skip — Get Token Without SMS
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulated Ticket Printing Modal Overlay -->
+  <div class="printer-container" id="printer-overlay">
+    <div class="printer-slot">
+      <div class="printer-paper" id="ticket-receipt">
+        <div class="receipt-header">
+          <div class="receipt-logo">INVO TOKENS</div>
+          <div style="font-size: 0.8rem; color: #4b5563; margin-top: 0.25rem;">QUEUE MANAGEMENT SYSTEM</div>
+        </div>
+        <div class="receipt-body">
+          <div class="receipt-type" id="receipt-type-label">Job Request</div>
+          <div style="font-size: 0.75rem; color: #6b7280;">Your Token Number is:</div>
+          <div class="receipt-number" id="receipt-token-num">JR-000</div>
+          <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem; max-width: 260px; margin-left: auto; margin-right: auto; line-height: 1.3;">
+            Please proceed to the waiting area and look at the main screen.
+          </div>
+        </div>
+        <div class="receipt-footer">
+          <p id="receipt-date">Date: 2026-06-13</p>
+          <p id="receipt-time">Time: 11:00 AM</p>
+          <p style="font-weight: 600; margin-top: 0.5rem;">Thank you for your patience!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden container for physical printing -->
+  <div id="print-area">
+    <div class="print-ticket">
+      <div class="print-header">INVO TOKENS</div>
+      <div class="print-subheader">Queue Management System</div>
+      <div class="print-divider">-----------------------------</div>
+      <div class="print-type" id="print-type-label">JOB REQUEST</div>
+      <div class="print-number" id="print-token-num">JR-000</div>
+      <div class="print-divider">-----------------------------</div>
+      <div class="print-date-time">
+        <span id="print-date">Date: 2026-06-13</span><br>
+        <span id="print-time">Time: 11:00 AM</span>
+      </div>
+      <div class="print-footer">
+        Please wait for your number to be called.
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/kiosk.js"></script>
+  <script>
+    // Generate QR code pointing to the /customer page
+    // Uses current host so it works on any device on the same network
+    const customerUrl = window.location.origin + '/customer';
+    new QRCode(document.getElementById('kiosk-qrcode'), {
+      text: customerUrl,
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+Kiosk (ටෝකන් ගන්න):
+http://192.168.10.193:3000/kiosk
+
+TV Display (ටෝකන් අංක පෙන්වන තිරය):
+http://192.168.10.193:3000/display
+
+Counter (කවුන්ටර පාලනයට):
+http://192.168.10.193:3000/counter
+
+Adimin password : admin

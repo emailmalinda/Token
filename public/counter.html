@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Counter Dashboard - Token System</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <!-- Dialpad Icon -->
+          <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm0-4h-2V7h2v7z"/>
+          </svg>
+        </div>
+        <h1 class="brand-title">INVO TERMINAL OPERATOR</h1>
+      </div>
+      <div class="session-info" id="session-info" style="display: none;">
+        <div class="status-indicator active"></div>
+        <span id="counter-label" style="font-weight: 600;">Counter -</span>
+        <button class="logout-btn" id="btn-logout">Logout</button>
+      </div>
+      <div class="live-clock" id="live-clock">--:--:-- AM</div>
+    </header>
+
+    <!-- 1. Selection / Login Screen -->
+    <main class="login-container" id="login-view">
+      <div class="login-card glass-panel">
+        <h2>Counter Setup</h2>
+        <p>Please select your workstation counter number to start managing the queue.</p>
+        
+        <div class="counter-selector">
+          <button class="counter-select-btn" data-counter="1">Counter 1</button>
+          <button class="counter-select-btn" data-counter="2">Counter 2</button>
+          <button class="counter-select-btn" data-counter="3">Counter 3</button>
+          <button class="counter-select-btn" data-counter="4">Counter 4</button>
+          <button class="counter-select-btn" data-counter="admin" style="grid-column: span 2; border-color: rgba(0, 242, 254, 0.25);">Admin Terminal</button>
+        </div>
+
+        <!-- Password input block (hidden by default, shown when admin selected) -->
+        <div id="password-group" style="display: none; margin-bottom: 1.5rem; text-align: left;">
+          <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">Admin Password</label>
+          <input type="password" id="admin-password" placeholder="Enter password (default: admin123)" style="width: 100%; padding: 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s;">
+          <div id="password-error" style="color: var(--accent-red); font-size: 0.85rem; margin-top: 0.5rem; display: none;">Incorrect password. Please try again.</div>
+        </div>
+
+        <button class="btn-primary" id="btn-login-submit" disabled>Open Workstation</button>
+      </div>
+    </main>
+
+    <!-- 2. Main Workstation Dashboard -->
+    <main class="counter-dashboard" id="dashboard-view" style="display: none;">
+      <!-- Left side: Operator Controls -->
+      <section class="operator-controls">
+        
+        <!-- Queue Stats Grid -->
+        <div class="metrics-row">
+          <div class="metric-card glass-panel jr-metric">
+            <div class="metric-title">Job Requests Waiting</div>
+            <div class="metric-value" id="jr-waiting-count">0</div>
+          </div>
+          <div class="metric-card glass-panel cl-metric">
+            <div class="metric-title">Collections Waiting</div>
+            <div class="metric-value" id="cl-waiting-count">0</div>
+          </div>
+        </div>
+
+        <!-- Serving Window Panel -->
+        <div class="current-serving-panel glass-panel">
+          <h3>Your Active Token</h3>
+          <div class="serving-now-token empty" id="active-token-display">NO ACTIVE CALL</div>
+          
+          <div class="action-row">
+            <button class="btn-secondary recall-btn" id="btn-recall" disabled>
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+              </svg>
+              Recall Token
+            </button>
+            <button class="btn-secondary complete-btn" id="btn-complete" disabled>
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Mark Complete
+            </button>
+          </div>
+        </div>
+
+        <!-- Call Buttons -->
+        <div class="control-grid">
+          <button class="call-btn jr-call glass-panel" id="btn-call-jr">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Call Next Job Request
+          </button>
+          
+          <button class="call-btn cl-call glass-panel" id="btn-call-cl">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Call Next Collection
+          </button>
+        </div>
+
+      </section>
+
+      <!-- Right side: Real-time Queue lists -->
+      <section class="queue-sidebar">
+        <!-- Job Request List -->
+        <div class="queue-sub-panel glass-panel">
+          <div class="queue-sub-title">
+            <span>Job Request Lineup</span>
+            <span class="queue-type-badge badge-jr">JR QUEUE</span>
+          </div>
+          <div class="queue-items-flow" id="jr-queue-list">
+            <span class="queue-empty-text">No tokens waiting</span>
+          </div>
+        </div>
+
+        <!-- Collection List -->
+        <div class="queue-sub-panel glass-panel">
+          <div class="queue-sub-title">
+            <span>Collection Lineup</span>
+            <span class="queue-type-badge badge-cl">CL QUEUE</span>
+          </div>
+          <div class="queue-items-flow" id="cl-queue-list">
+            <span class="queue-empty-text">No tokens waiting</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 3. Admin Terminal Dashboard -->
+    <main class="counter-dashboard" id="admin-view" style="display: none;">
+      <!-- Left side: Admin Tools -->
+      <section class="operator-controls">
+        <!-- Queue Stats Grid -->
+        <div class="metrics-row">
+          <div class="metric-card glass-panel jr-metric">
+            <div class="metric-title">Job Requests Waiting</div>
+            <div class="metric-value" id="admin-jr-waiting-count">0</div>
+          </div>
+          <div class="metric-card glass-panel cl-metric">
+            <div class="metric-title">Collections Waiting</div>
+            <div class="metric-value" id="admin-cl-waiting-count">0</div>
+          </div>
+        </div>
+
+        <!-- Token Generation Panel -->
+        <div class="current-serving-panel glass-panel" style="padding: 1.75rem; margin-bottom: 2rem;">
+          <h3 style="margin-bottom: 1.5rem;">Token Generator Console</h3>
+          <div class="control-grid" style="margin-bottom: 0;">
+            <button class="call-btn jr-call glass-panel" id="btn-admin-gen-jr" style="padding: 1.5rem 1rem; font-size: 1rem;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+              </svg>
+              Generate Job Request
+            </button>
+            <button class="call-btn cl-call glass-panel" id="btn-admin-gen-cl" style="padding: 1.5rem 1rem; font-size: 1rem;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+              </svg>
+              Generate Collection
+            </button>
+          </div>
+        </div>
+
+        <!-- System Controls Panel -->
+        <div class="current-serving-panel glass-panel" style="padding: 1.75rem; text-align: left; border-style: dashed;">
+          <h3 style="text-align: center; margin-bottom: 1.5rem; color: var(--accent-yellow);">Administrative Controls</h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border-glass);">
+              <div>
+                <div style="font-weight: 600;">Clear Call History Logs</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Clears recent logs on the display screen. Does not reset queue tokens.</div>
+              </div>
+              <button class="btn-secondary" id="btn-admin-clear-history" style="white-space: nowrap; border-color: rgba(245, 158, 11, 0.4); color: var(--accent-yellow); padding: 0.5rem 1.25rem; font-size: 0.9rem;">Clear Logs</button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 600; color: #fca5a5;">Reset Entire System</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Clears all queues, active calls, history, and resets number counters to 001.</div>
+              </div>
+              <button class="btn-danger" id="btn-admin-reset-system" style="white-space: nowrap; padding: 0.5rem 1.25rem; font-size: 0.9rem;">Reset System</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right side: Workstations live status board & click-to-call queues -->
+      <section class="queue-sidebar">
+        <!-- Workstations status -->
+        <div class="queue-sub-panel glass-panel" style="margin-bottom: 1.5rem;">
+          <div class="queue-sub-title" style="margin-bottom: 1rem;">
+            <span>Workstations Activity Board</span>
+            <span class="queue-type-badge badge-jr" style="background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border-color: rgba(0, 242, 254, 0.3);">LIVE STATUS</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;" id="admin-workstation-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Waiting lists with click-to-call feature -->
+        <div class="queue-sub-panel glass-panel">
+          <div class="queue-sub-title" style="margin-bottom: 1rem;">
+            <span>Queue Lineup (Click to Call)</span>
+            <span class="queue-type-badge badge-cl">ADMIN QUEUE</span>
+          </div>
+          
+          <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent-blue); margin-bottom: 0.5rem;">Job Requests</div>
+            <div class="queue-items-flow" id="admin-jr-queue-list">
+              <span class="queue-empty-text">No tokens waiting</span>
+            </div>
+          </div>
+          
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--accent-green); margin-bottom: 0.5rem;">Collections</div>
+            <div class="queue-items-flow" id="admin-cl-queue-list">
+              <span class="queue-empty-text">No tokens waiting</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div class="modal-overlay" id="reset-modal">
+    <div class="modal-content glass-panel">
+      <h3 style="color: var(--accent-red);">Warning!</h3>
+      <p>This action will completely reset all Job Request and Collection token queues back to <b>001</b> and clear the main display terminal. Do you wish to proceed?</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="btn-reset-cancel" style="border-color: var(--border-glass)">Cancel</button>
+        <button class="btn-primary" id="btn-reset-confirm" style="background: var(--accent-red); border-color: transparent;">Yes, Reset All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Call Specific Token Modal -->
+  <div class="modal-overlay" id="call-specific-modal">
+    <div class="modal-content glass-panel">
+      <h3>Call Token <span id="call-specific-token-label" style="color: var(--accent-cyan);">JR-000</span></h3>
+      <p style="margin-bottom: 1.5rem;">Select which counter workstation to assign and call this token to:</p>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <button class="btn-primary call-specific-counter-btn" data-counter="1">Counter 1</button>
+        <button class="btn-primary call-specific-counter-btn" data-counter="2">Counter 2</button>
+        <button class="btn-primary call-specific-counter-btn" data-counter="3">Counter 3</button>
+        <button class="btn-primary call-specific-counter-btn" data-counter="4">Counter 4</button>
+      </div>
+      
+      <button class="btn-secondary" id="btn-call-specific-cancel" style="width: 100%; border-color: var(--border-glass);">Cancel</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/counter.js"></script>
+</body>
+</html>
